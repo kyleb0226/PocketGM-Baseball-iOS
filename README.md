@@ -36,3 +36,29 @@ Then rebuild/reinstall from Xcode. The original game file is never modified.
   "works offline" option you refresh on your own schedule.
 - `ContentView.swift` loads `Web/index.html` in a full-screen `WKWebView`; the
   HTML handles its own safe-area insets.
+
+---
+
+# Pocket GM — Soccer (sibling app)
+
+A soccer reimagining of this game lives alongside the baseball app in
+`PocketGMSoccer/` with its own Xcode project (`PocketGMSoccer.xcodeproj`). Same
+tech: a single-file React game (`PocketGMSoccer/Web/index.html`) bundled offline
+inside a SwiftUI `WKWebView`. Build & install exactly like the baseball app —
+just open `PocketGMSoccer.xcodeproj` instead. See `PocketGMSoccer/README.md`.
+
+What's different from baseball (it's its own full GM sim, not a skin):
+- **Multi-position players.** Every player has a primary position plus the
+  related positions he can also fill (e.g. `RW (RM, ST)`), so lots of formations
+  are viable. The tactics screen draws a top-down pitch; fielding a player out of
+  position is allowed but flagged in orange with a rating penalty.
+- **Formations & tactics.** 9 formations (4-4-2, 4-3-3, 4-2-3-1, 3-5-2, …) with
+  an auto-pick-best-XI helper and defensive/balanced/attacking tactics.
+- **Two divisions + promotion/relegation.** A 20-team Premier and 20-team
+  Championship, double round-robin (38 games), bottom 3 / top 3 swap each year.
+- **Domestic knockout cup**, points-based tables (3/1/0), stat leaders
+  (goals/assists/clean sheets/ratings), a **transfer market** (fees + AI bids),
+  **free agency**, a **youth academy** intake, season **awards**
+  (Player of the Season, Golden Boot, Golden Glove), a **Hall of Fame**, club
+  finances/wages, and a multi-season franchise loop. Saves use the same
+  offline-localStorage slots + JSON export/import.
