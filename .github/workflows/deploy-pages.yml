@@ -1,0 +1,58 @@
+name: Deploy games to GitHub Pages
+
+# Publishes the offline web games (soccer + baseball) to GitHub Pages so they
+# can be opened from any browser — Mac or phone — at one URL. The native iOS
+# apps are unaffected; this just hosts the same Web/ folders.
+
+on:
+  push:
+    branches:
+      - main
+      - claude/soccer-game-variant-l0yn8l
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Allow only one concurrent deployment.
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Assemble site
+        run: |
+          mkdir -p _site/soccer _site/baseball
+          cp -R PocketGMSoccer/Web/.   _site/soccer/
+          cp -R PocketGMBaseball/Web/. _site/baseball/
+          cp site/index.html _site/index.html
+          # SPA-style 404 fallback so deep links still land on the menu
+          cp site/index.html _site/404.html
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+        with:
+          enablement: true
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

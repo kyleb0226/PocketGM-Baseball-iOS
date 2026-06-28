@@ -1,0 +1,120 @@
+==============================================================================
+POCKET GM — SOCCER : HANDOFF / TODO  (paste this into a new session to continue)
+==============================================================================
+
+WHAT THIS IS
+------------
+A football-manager game. Single-file React app (JSX transpiled in-page by a
+vendored Babel), bundled offline inside a SwiftUI WKWebView iOS app — same
+pattern as the baseball app in the same repo.
+
+WHERE THE CODE LIVES
+--------------------
+- Repo:    kyleb0226/pocketgm-baseball-ios  (this is where I can push)
+- Branch:  claude/soccer-game-variant-l0yn8l
+- Game:    PocketGMSoccer/Web/index.html      <-- the whole game is this one file
+- iOS app: PocketGMSoccer/  (ContentView.swift, PocketGMSoccerApp.swift, Web/)
+- Xcode:   PocketGMSoccer.xcodeproj
+- Related: kyleb0226/soccer-gm = intended home for the single-file WEB build
+           (CDN scripts, like kyleb0226/baseball-gm). Not yet populated — needs
+           a multi-repo session OR copy the web build over by hand.
+
+HOW TO RUN IT
+-------------
+- Mac (no setup):   open PocketGMSoccer/Web/index.html in a browser.
+- iPhone (native):  open PocketGMSoccer.xcodeproj in Xcode, Run to device.
+- Anywhere (web):   GitHub Pages workflow already in repo (.github/workflows).
+
+HOW TO VALIDATE CHANGES (do this before committing — no iOS build needed)
+------------------------------------------------------------------------
+1) Parse check: transpile the #app-src JSX with the vendored Babel under Node
+   and confirm it parses (catches syntax errors).
+2) Engine check: strip the React mount, expose engine fns, run several full
+   seasons headless; assert every league is balanced (W==L, GF==GA, 38 games),
+   champions/cups/awards/transfers work, player count stays stable.
+3) Render check: jsdom + the vendored React/ReactDOM, mount <App/>, click
+   through every tab + play a matchday, assert zero console errors.
+   (jsdom must be npm-installed in a scratch dir; set url:'https://game.local/'
+   so localStorage works; load react UMD then set global.React BEFORE react-dom;
+   React 18 render is async so flush a few setTimeout(0) ticks before asserting.)
+
+CURRENT STATE (DONE)
+--------------------
+- Core game: squad, multi-position players (primary + secondary positions),
+  formations (9) + tactics, pitch-view formation editor with out-of-position
+  penalty, match sim (goals/assists/clean sheets/cards/ratings/MOTM),
+  transfers (fees + AI bids), free agency, youth intake, finances/wages,
+  per-country awards, Hall of Fame, multi-season loop, slot saves + JSON
+  export/import.
+- WORLD: 4 countries x 2 divisions = 8 leagues, 160 clubs. Promotion/relegation
+  WITHIN each country (bottom 3 <-> top 3). One domestic knockout cup per
+  country (winner + runnerUp tracked). Per-country champions/awards. Club
+  honours data recorded (club.honours) via addHonour().
+- Save format v2 (legacy single-country saves migrate).
+
+TODO — CORE FEATURES REQUESTED (do in this order; they interlock)
+-----------------------------------------------------------------
+1. CONTINENTAL "CHAMPIONS CUP": 16 qualifiers (each country's top 3 + the
+   cup-route club), seeded knockout R16 -> QF -> SF -> Final, neutral final,
+   its own tab/bracket + news + honours. (cup winner/runnerUp already tracked.)
+2. CONTINENTAL QUALIFICATION RULE (per country): top 3 auto-qualify; the 4th
+   spot goes to the domestic CUP WINNER -> if the winner already finished top 3,
+   it goes to the cup RUNNER-UP -> if the runner-up is ALSO top 3, a 4th-7th
+   mini-playoff decides the 4th continental club.
+3. PROMOTION PLAYOFFS: change 2nd-tier promotion to TOP 2 AUTO + a 3rd-6th
+   playoff (semis + final) for the 3rd promotion spot.
+4. END-OF-SEASON PLAYOFF PHASE: shared infra that runs the promotion playoffs
+   AND the continental 4th-spot playoff after the regular season, before the
+   season rollover. (New phase between "regular" and "offseason".)
+5. YOUTH TEAMS (5v5): a simplified youth competition that gives prospects game
+   time and drives their development (replaces the abstract "intake just
+   appears"). Keep it lightweight/easy to manage.
+
+TODO — EXTRAS SELECTED
+----------------------
+6. CARD SUSPENSIONS: yellows accumulate -> 1-match ban; red -> multi-match ban.
+   Engine already tracks YC/RC per player; add a banned/suspension state that
+   excludes a player from his next league match(es).
+7. TROPHY CABINET / HONOURS UI: data exists (club.honours = [{season,type,
+   label}]); add a tab/section showing each club's titles, cups, promotions,
+   continental wins. Make it reachable from the club view (see #11).
+8. RICHER MATCH DETAIL: possession %, shots, xG, and a minute-by-minute
+   scoreline in the match/box-score view. Feed possession/shots into ratings.
+9. TRANSFER WINDOWS: restrict transfers to summer + January windows instead of
+   always-open (show a "window closed" state outside them).
+10. DEEPER PLAYER STATS: GK SAVES, per-player xG, shots, key passes, and a
+    WAR-style "Rating Value" number. Surface on player cards + leaderboards.
+11. CLUB DETAIL VIEW (NEW REQUEST): clicking a club anywhere (tables, fixtures,
+    cup, etc.) opens a view showing that club's SEASON HISTORY (past finishes +
+    honours) and its CURRENT LINEUP / XI + squad. (Player names are already
+    clickable via PlayerCtx; add an analogous ClubCtx + ClubModal.)
+12. PLAYER CONTRACTS NEED WORK (NEW REQUEST): deeper contract system —
+    real renewal negotiation (wage demand scales with OVR/age/form), choose
+    contract length, wage budget vs transfer budget, release clauses/buyouts,
+    players unhappy as deals run down (demand renewal or angle to leave),
+    Bosman free-agent poaching when <1 yr left, youth vs pro contracts.
+    Current system is just years + salary with a basic "Renew" button.
+
+KNOWN ROUGH EDGES / VERIFY
+--------------------------
+- Continental cup has no UI tab yet (the Cup tab is domestic-only).
+- Save size with ~3,500 players over many seasons — confirm localStorage holds
+  up on a phone; add pruning if needed (histories already capped).
+- Match rating doesn't yet use possession/shots (waits on #8).
+- Honours recorded but not displayed yet (waits on #7/#11).
+
+KEY CODE LANDMARKS (in PocketGMSoccer/Web/index.html)
+-----------------------------------------------------
+- World model:      COUNTRIES, TIERS, leagueIdx/countryOf/tierOf, countryClubDefs
+- Positions:        ALL_POS, POS_W, POS_TILT, POS_ADJ, FORMATIONS, posPenalty
+- Gen:              makePlayer, buildSquad, generateLeague
+- Schedule:         divRounds, buildSchedule (per-league round robin)
+- Match:            simMatch, applyMatch, unitRatings, clubStrength
+- Season:           simRound, finalizeSeason, computeAwards, startNextSeason
+- Cups:             initCups, advanceCup, playCupRound, CUP_MD
+- Save:             SAVE_VERSION(=2), migrate, saveGame/loadSlot, export/import
+- UI root:          App + TABS array; components below it
+- Honours helper:   addHonour(club, season, type, label)
+
+SUGGESTED NEXT STEP: start at TODO #1 (continental cup) then #2/#3/#4 together.
+==============================================================================
